@@ -210,13 +210,10 @@
             textarea.style.height = Math.min(textarea.scrollHeight, 300) + 'px';
         }
 
-        // Sauvegarder le texte dans les variables JavaScript
+        // Sauvegarder le texte dans localStorage
         function saveText(index) {
             const textarea = document.getElementById(`text${index}`);
-            if (!window.savedTexts) {
-                window.savedTexts = {};
-            }
-            window.savedTexts[`text${index}`] = textarea.value;
+            localStorage.setItem(`text${index}`, textarea.value);
             
             // Afficher un message de sauvegarde
             updateStatus(`Texte ${index} sauvegardé`);
@@ -225,45 +222,58 @@
 
         // Charger les textes sauvegardés
         function loadSavedTexts() {
-            if (window.savedTexts) {
-                for (let i = 1; i <= 8; i++) {
-                    const textarea = document.getElementById(`text${i}`);
-                    const saved = window.savedTexts[`text${i}`];
-                    if (saved) {
-                        textarea.value = saved;
-                        autoResize(textarea);
-                    }
+            for (let i = 1; i <= 8; i++) {
+                const textarea = document.getElementById(`text${i}`);
+                const saved = localStorage.getItem(`text${i}`);
+                if (saved) {
+                    textarea.value = saved;
+                    autoResize(textarea);
                 }
             }
         }
 
-        // Fonction pour obtenir une voix grave
+        // Fonction pour obtenir une voix grave masculine
         function getDeepVoice() {
             const voices = speechSynthesis.getVoices();
             
-            // Rechercher une voix masculine française
+            // Priorité 1: Voix masculines françaises
             let selectedVoice = voices.find(voice => 
                 voice.lang.startsWith('fr') && 
                 (voice.name.toLowerCase().includes('male') || 
                  voice.name.toLowerCase().includes('homme') ||
+                 voice.name.toLowerCase().includes('masculin') ||
                  voice.name.toLowerCase().includes('thomas') ||
-                 voice.name.toLowerCase().includes('daniel'))
+                 voice.name.toLowerCase().includes('daniel') ||
+                 voice.name.toLowerCase().includes('paul') ||
+                 voice.name.toLowerCase().includes('vincent'))
             );
             
-            // Si pas de voix masculine française, prendre la première voix française
+            // Priorité 2: Voix françaises avec "man" ou "male" dans le nom
             if (!selectedVoice) {
-                selectedVoice = voices.find(voice => voice.lang.startsWith('fr'));
+                selectedVoice = voices.find(voice => 
+                    voice.lang.startsWith('fr') && 
+                    (voice.name.toLowerCase().includes('man') ||
+                     voice.name.toLowerCase().includes('male'))
+                );
             }
             
-            // Si pas de voix française, prendre une voix masculine anglaise
+            // Priorité 3: Voix masculines anglaises comme fallback
             if (!selectedVoice) {
                 selectedVoice = voices.find(voice => 
                     voice.name.toLowerCase().includes('male') ||
                     voice.name.toLowerCase().includes('david') ||
-                    voice.name.toLowerCase().includes('daniel')
+                    voice.name.toLowerCase().includes('daniel') ||
+                    voice.name.toLowerCase().includes('mark') ||
+                    voice.name.toLowerCase().includes('alex')
                 );
             }
             
+            // Priorité 4: Dernière chance - toute voix française
+            if (!selectedVoice) {
+                selectedVoice = voices.find(voice => voice.lang.startsWith('fr'));
+            }
+            
+            console.log('Voix sélectionnée:', selectedVoice?.name || 'Voix par défaut');
             return selectedVoice || voices[0];
         }
 
@@ -289,8 +299,8 @@
             }
             
             // Paramètres pour une voix grave et imposante
-            utterance.rate = 0.8;    // Plus lent
-            utterance.pitch = 0.7;   // Plus grave
+            utterance.rate = 0.7;    // Plus lent
+            utterance.pitch = 0.5;   // Encore plus grave
             utterance.volume = 1.0;  // Volume maximum
             
             // Gestion des événements
@@ -343,4 +353,4 @@
         });
     </script>
 </body>
-  </html>
+</html>
